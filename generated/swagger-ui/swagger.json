@@ -18,11 +18,13 @@
   "host" : "petstore.swagger.wordnik.com",
   "basePath" : "/api",
   "tags" : [ {
-    "name" : "pet"
-  }, {
     "name" : "user"
   }, {
     "name" : "store"
+  }, {
+    "name" : "v1development"
+  }, {
+    "name" : "pet"
   } ],
   "schemes" : [ "http", "https" ],
   "paths" : {
@@ -98,11 +100,11 @@
           "required" : true,
           "type" : "array",
           "items" : {
-            "type" : "string"
+            "type" : "string",
+            "default" : "available",
+            "enum" : [ "available", "pending", "sold" ]
           },
-          "collectionFormat" : "multi",
-          "default" : "available",
-          "enum" : [ "available", "pending", "sold" ]
+          "collectionFormat" : "csv"
         } ],
         "responses" : {
           "200" : {
@@ -139,7 +141,7 @@
           "items" : {
             "type" : "string"
           },
-          "collectionFormat" : "multi"
+          "collectionFormat" : "csv"
         } ],
         "responses" : {
           "200" : {
@@ -173,6 +175,8 @@
           "description" : "ID of pet that needs to be fetched",
           "required" : true,
           "type" : "integer",
+          "maximum" : 5.0,
+          "minimum" : 1.0,
           "format" : "int64"
         } ],
         "responses" : {
@@ -239,7 +243,6 @@
         "parameters" : [ {
           "name" : "api_key",
           "in" : "header",
-          "description" : "",
           "required" : false,
           "type" : "string",
           "default" : ""
@@ -302,7 +305,9 @@
           "in" : "path",
           "description" : "ID of pet that needs to be fetched",
           "required" : true,
-          "type" : "string"
+          "type" : "string",
+          "maximum" : 5.0,
+          "minimum" : 1.0
         } ],
         "responses" : {
           "200" : {
@@ -330,7 +335,8 @@
           "in" : "path",
           "description" : "ID of the order that needs to be deleted",
           "required" : true,
-          "type" : "string"
+          "type" : "string",
+          "minimum" : 1.0
         } ],
         "responses" : {
           "400" : {
@@ -545,10 +551,66 @@
           }
         }
       }
+    },
+    "/v1/development/get" : {
+      "get" : {
+        "tags" : [ "v1development" ],
+        "summary" : "Retrieves complex data from the server.",
+        "description" : "This is only half of what the POST operation does; it only returns data from the server to the client, but does not send any. It's convenient to be called in a web browser.",
+        "operationId" : "get",
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "apiKey",
+          "in" : "query",
+          "required" : false,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "A hardcoded consistent ComplexObject.",
+            "schema" : {
+              "$ref" : "#/definitions/ComplexObject"
+            }
+          }
+        }
+      }
+    },
+    "/v1/development/post" : {
+      "post" : {
+        "tags" : [ "v1development" ],
+        "summary" : "Send various data to the server.",
+        "description" : "Ensures that all these data types correctly make it to the server and back. Marshalling of all these types works.",
+        "operationId" : "post",
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ {
+          "name" : "apiKey",
+          "in" : "query",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "in" : "body",
+          "name" : "body",
+          "description" : "The ComplexObject as input.",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/ComplexObject"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "A ComplexObject based on the input.",
+            "schema" : {
+              "$ref" : "#/definitions/ComplexObject"
+            }
+          }
+        }
+      }
     }
   },
   "definitions" : {
     "Category" : {
+      "type" : "object",
       "properties" : {
         "id" : {
           "type" : "integer",
@@ -562,7 +624,77 @@
         "name" : "Category"
       }
     },
+    "Circle" : {
+      "allOf" : [ {
+        "$ref" : "#/definitions/GeometricalFigure"
+      }, {
+        "type" : "object",
+        "properties" : {
+          "color" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "radius" : {
+            "type" : "number",
+            "format" : "double",
+            "readOnly" : true
+          }
+        }
+      } ]
+    },
+    "ComplexObject" : {
+      "type" : "object",
+      "properties" : {
+        "string" : {
+          "type" : "string",
+          "readOnly" : true
+        },
+        "intNumber" : {
+          "type" : "integer",
+          "format" : "int32",
+          "readOnly" : true
+        },
+        "doubleNumber" : {
+          "type" : "number",
+          "format" : "double",
+          "readOnly" : true
+        },
+        "yesOrNo" : {
+          "type" : "boolean",
+          "readOnly" : true,
+          "default" : false
+        },
+        "color" : {
+          "type" : "string",
+          "readOnly" : true,
+          "enum" : [ "RED", "GREEN", "BLUE" ]
+        },
+        "geometricalFigure" : {
+          "readOnly" : true,
+          "$ref" : "#/definitions/GeometricalFigure"
+        },
+        "optional1" : {
+          "type" : "string",
+          "readOnly" : true
+        },
+        "optional2" : {
+          "type" : "string",
+          "readOnly" : true
+        }
+      }
+    },
+    "GeometricalFigure" : {
+      "type" : "object",
+      "discriminator" : "type",
+      "properties" : {
+        "color" : {
+          "type" : "string",
+          "readOnly" : true
+        }
+      }
+    },
     "Order" : {
+      "type" : "object",
       "properties" : {
         "id" : {
           "type" : "integer",
@@ -595,6 +727,7 @@
       }
     },
     "Pet" : {
+      "type" : "object",
       "required" : [ "name", "photoUrls" ],
       "properties" : {
         "id" : {
@@ -638,7 +771,31 @@
         "name" : "Pet"
       }
     },
+    "Rectangle" : {
+      "allOf" : [ {
+        "$ref" : "#/definitions/GeometricalFigure"
+      }, {
+        "type" : "object",
+        "properties" : {
+          "color" : {
+            "type" : "string",
+            "readOnly" : true
+          },
+          "length" : {
+            "type" : "number",
+            "format" : "double",
+            "readOnly" : true
+          },
+          "width" : {
+            "type" : "number",
+            "format" : "double",
+            "readOnly" : true
+          }
+        }
+      } ]
+    },
     "Tag" : {
+      "type" : "object",
       "properties" : {
         "id" : {
           "type" : "integer",
@@ -653,6 +810,7 @@
       }
     },
     "User" : {
+      "type" : "object",
       "properties" : {
         "id" : {
           "type" : "integer",
